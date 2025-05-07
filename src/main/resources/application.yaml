@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: appnotification
+  kafka:
+    consumer:
+      group-id: appnotification
