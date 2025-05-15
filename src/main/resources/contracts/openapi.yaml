@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: Platform Notifications
+  description: |-
+    
+    Specification of the Platform Notifications microservice, which is part of the notifications context.
+  contact:
+    email: david.cediel@alumnos.upm.es
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.1.0
+servers:
+  - url: https://localhost:8080/v1/app-notification
+    description: Local development
+tags:
+  - name: Notifications
+    description: Tag related to notifications
+paths:
+  /register:
+    post:
+      operationId: registerToNotifications
+      tags:
+        - Notifications
+      summary: Register to the platform notifications, it will receive any app notification produced
+      parameters:
+        - in: header
+          required: true
+          name: App-User-ID
+          schema:
+            type: string
+          description: >+
+            User that sends the request<br>
+            **It will be used later to filter notifications**
+
+      responses:
+        '200':
+          description: Connected to receive messages
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+        '409':
+          description: Reservation cannot be performed due to not enough stock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  responses:
+    Unauthorized:
+      description: Unauthenticated, unable to perform the operation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Not enough privileges to perform the operation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+
+    Notification:
+      type: object
+      properties:
+        event:
+          type: string
+          example: "New Notification!"
+          description: Title of the notification
+        data:
+          type: string
+          format: json
+          description: Any notification data, it is an ope format since the varity of notifications
+          example: {"foo": "bar", "jhon": "doe"}
+    ErrorResponse:
+      required:
+        - developerMessage
+        - errorCode
+        - userMessage
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: 2025-04-10T10:51:15.7047861
+        error:
+          type: string
+          description: Code that identify the error
+          example: "PRD-VA-01"
+        message:
+          maxLength: 256
+          pattern: "^[a-zA-Z\\s]*$"
+          type: string
+          example: Error saving the user
+        path:
+          type: string
+          description: uri that fails
+          example: http://localhost:8080/v1/inventory/reservations
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
